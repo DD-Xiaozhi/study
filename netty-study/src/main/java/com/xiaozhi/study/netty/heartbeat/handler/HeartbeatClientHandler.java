@@ -9,6 +9,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.CharsetUtil;
 
 /**
+ * 带有心跳机制的客户端实现
  *
  * @author DD
  */
@@ -26,10 +27,17 @@ public class HeartbeatClientHandler extends ChannelInboundHandlerAdapter {
             if (IdleState.WRITER_IDLE.equals(idleStateEvent.state())) {
                 // 表示此时客户端有一段事件没有向服务端发送消息
                 // 防止服务端断开连接，手动发送心跳包
-                ctx.channel().writeAndFlush(HEARTBEAT_DATA);
+                ctx.channel().writeAndFlush(HEARTBEAT_DATA.duplicate());
                 System.out.println("成功发送心跳包...");
+            } else {
+                super.userEventTriggered(ctx, evt);
             }
         }
+    }
+
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        System.out.println(STR."收到服务端消息： \{msg}");
     }
 
     @Override
