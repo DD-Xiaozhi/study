@@ -1,12 +1,9 @@
 package com.xiaozhi.study.netty.heartbeat.handler;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.CharsetUtil;
 
 /**
  * 带有心跳机制的服务端实现
@@ -14,9 +11,6 @@ import io.netty.util.CharsetUtil;
  * @author DD
  */
 public class HeartbeatServerHandler extends ChannelInboundHandlerAdapter {
-
-    private static final ByteBuf HEARTBEAT_DATA =
-            Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("I am Alive", CharsetUtil.UTF_8));
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
@@ -27,7 +21,6 @@ public class HeartbeatServerHandler extends ChannelInboundHandlerAdapter {
         } else {
             super.userEventTriggered(ctx, evt);
         }
-        super.userEventTriggered(ctx, evt);
     }
 
     @Override
