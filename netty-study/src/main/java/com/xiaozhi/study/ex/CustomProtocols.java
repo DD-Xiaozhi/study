@@ -4,8 +4,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 
+import java.io.*;
 import java.util.List;
 
 /**
@@ -36,28 +39,62 @@ public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtoc
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext,
                           Message message, List<Object> list) throws Exception {
+        // 创建消息缓冲池
+        ByteBuf msgBuf = channelHandlerContext.alloc().buffer();
+        msgBuf.writeBytes(message.getMagicNumber());
+        msgBuf.writeFloat(message.getVersion());
+        msgBuf.writeInt(message.getMessageType().getCode());
+        msgBuf.writeInt(message.getSerializationType().getCode());
 
+        // 这里可以做成策略模式，这里不展开
+        if (SerializationType.JDK.equals(message.getSerializationType())) {
+            // 创建字节数组输出流
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            // 创建对象输出流，它会对java对象进行实例化操作
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+
+            oos.writeObject(message.getMessageBody());
+            byte[] byteArray = bos.toByteArray();
+
+            msgBuf.writeInt(byteArray.length);
+            msgBuf.writeBytes(byteArray);
+        }
+
+        // 传递给下一个管道处理器处理
+        list.add(msgBuf);
     }
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext,
                           ByteBuf byteBuf, List<Object> list) throws Exception {
+        byte[] magicNumber = byteBuf.readBytes(4).array();
+        float version = byteBuf.readFloat();
+        int messageType = byteBuf.readInt();
+        int serializationType = byteBuf.readInt();
+        int bodyLength = byteBuf.readInt();
+        byte[] messageBody = byteBuf.readBytes(bodyLength).array();
+        Object bodyObject = null;
+        if (SerializationType.JDK.getCode().equals(serializationType)) {
+            ByteArrayInputStream bis = new ByteArrayInputStream(messageBody);
+            ObjectInputStream oos = new ObjectInputStream(bis);
+            bodyObject = oos.readObject();
+        }
 
+        list.add(bodyObject);
     }
-
 
     @Data
     public static class Message {
 
         /**
-         * 魔数
+         * 魔数 (4个字节)
          */
-        private byte[] magicNumber;
+        private byte[] magicNumber = { 13, 14, 66, 66 };
 
         /**
          * 版本号
          */
-        private int version;
+        private float version = 0.1f;
 
         /**
          * 消息类型
@@ -75,22 +112,32 @@ public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtoc
         private SerializationType serializationType;
 
         /**
-         * 消息
+         * 消息体
          */
-        private Object message;
+        private Object messageBody;
     }
 
+     @Getter
+    @AllArgsConstructor
     private enum SerializationType {
 
-        JSON,
-        String,
-        PROTOBUF,
-        JDK
+        JSON(0, "JSON"),
+        STRING(1, "String"),
+        PROTOBUF(2, "PROTOBUF"),
+        JDK(3, "JDK");
+
+        private final Integer code;
+        private final String type;
     }
 
+    @Getter
+    @AllArgsConstructor
     private enum MessageType {
 
-        HEARTBEAT,
-        DATA_TRANSFER
+        HEARTBEAT(0, "HEARTBEAT"),
+        DATA_TRANSFER(1, "DATA_TRANSFER");
+
+        private final Integer code;
+        private final String type;
     }
 }
