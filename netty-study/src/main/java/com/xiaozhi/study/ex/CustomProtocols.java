@@ -1,14 +1,21 @@
 package com.xiaozhi.study.ex;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.MessageToMessageCodec;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,6 +42,7 @@ import java.util.List;
 @ChannelHandler.Sharable
 public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtocols.Message> {
 
+    private static final byte[] DEFAULT_MAGIC_NUMBER = {13, 14, 66, 66};
 
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext,
@@ -68,8 +76,15 @@ public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtoc
     protected void decode(ChannelHandlerContext channelHandlerContext,
                           ByteBuf byteBuf, List<Object> list) throws Exception {
         byte[] magicNumber = byteBuf.readBytes(4).array();
+        if (!Arrays.equals(magicNumber, DEFAULT_MAGIC_NUMBER)) {
+            throw new IllegalAccessException("Magic number is illegal");
+        }
+
+        // 策略模式不同的版本使用不同的处理方式
         float version = byteBuf.readFloat();
+        // 通过不同的策略处理不同的消息类型
         int messageType = byteBuf.readInt();
+        // 获取序列化方式
         int serializationType = byteBuf.readInt();
         int bodyLength = byteBuf.readInt();
         byte[] messageBody = byteBuf.readBytes(bodyLength).array();
@@ -84,12 +99,19 @@ public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtoc
     }
 
     @Data
-    public static class Message {
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Message implements Serializable {
+
+        public static final Message DEFAULT = new Message();
+
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         /**
          * 魔数 (4个字节)
          */
-        private byte[] magicNumber = { 13, 14, 66, 66 };
+        private byte[] magicNumber = DEFAULT_MAGIC_NUMBER;
 
         /**
          * 版本号
@@ -99,7 +121,7 @@ public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtoc
         /**
          * 消息类型
          */
-        private MessageType messageType;
+        private MessageType messageType = MessageType.DATA_TRANSFER;
 
         /**
          * 消息体长度
@@ -109,15 +131,16 @@ public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtoc
         /**
          * 序列化方式
          */
-        private SerializationType serializationType;
+        private SerializationType serializationType = SerializationType.JDK;
 
         /**
          * 消息体
          */
         private Object messageBody;
+
     }
 
-     @Getter
+    @Getter
     @AllArgsConstructor
     private enum SerializationType {
 
@@ -139,5 +162,68 @@ public class CustomProtocols extends MessageToMessageCodec<ByteBuf, CustomProtoc
 
         private final Integer code;
         private final String type;
+    }
+}
+
+
+class Client {
+
+    @SneakyThrows
+    public static void main(String[] args) {
+        Bootstrap bootstrap = new Bootstrap();
+        NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+        bootstrap.group(eventLoopGroup)
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline()
+                                .addLast(new CustomProtocols())
+                                .addLast(new ChannelInboundHandlerAdapter() {
+
+                                    @Override
+                                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                                        CustomProtocols.Message message = CustomProtocols.Message.DEFAULT;
+                                        message.setMessageBody("我是客户端，你好");
+                                        ctx.writeAndFlush(message);
+                                    }
+                                });
+                    }
+                });
+        bootstrap.connect("127.0.0.1", 8008).sync();
+    }
+}
+
+
+class server {
+    @SneakyThrows
+    public static void main(String[] args) {
+        ServerBootstrap serverBootstrap = new ServerBootstrap();
+        NioEventLoopGroup boss = new NioEventLoopGroup();
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        serverBootstrap.group(boss, worker)
+                .channel(NioServerSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline()
+                                .addLast(new CustomProtocols())
+                                .addLast(new ChannelInboundHandlerAdapter() {
+
+                                    @Override
+                                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                                        CustomProtocols.Message message = CustomProtocols.Message.DEFAULT;
+                                        message.setMessageBody("我是客户端，你好");
+                                        ctx.writeAndFlush(message);
+                                    }
+
+                                    @Override
+                                    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                        super.channelRead(ctx, msg);
+                                    }
+                                });
+                    }
+                });
+        serverBootstrap.bind("127.0.0.1", 8008).sync();
     }
 }
