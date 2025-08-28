@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>netty-study</module>
+        <module>load-balancing-scheduling-algorithm</module>
     </modules>
 
     <properties>
