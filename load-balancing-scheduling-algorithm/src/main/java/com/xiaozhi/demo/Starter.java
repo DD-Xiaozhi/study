@@ -1,6 +1,6 @@
 package com.xiaozhi.demo;
 
-import com.xiaozhi.demo.strategy.WeightDistributionStrategy;
+import com.xiaozhi.demo.strategy.RoundRobinWeightDistributionStrategy;
 
 import java.util.List;
 import java.util.Map;
@@ -21,13 +21,18 @@ public class Starter {
 
 //        loadBalancer.setDistributionStrategy(new RoundDistributionStrategy(server));
 //        loadBalancer.setDistributionStrategy(new RandomDistributionStrategy(server));
-        loadBalancer.setDistributionStrategy(new WeightDistributionStrategy(Map.of(
+//        loadBalancer.setDistributionStrategy(new WeightDistributionStrategy(Map.of(
+//                "44.22.11.11:8881", 1,
+//                "44.22.11.11:8882", 2,
+//                "44.22.11.11:8883", 3
+//        )));
+        loadBalancer.setDistributionStrategy(new RoundRobinWeightDistributionStrategy(Map.of(
                 "44.22.11.11:8881", 1,
                 "44.22.11.11:8882", 2,
                 "44.22.11.11:8883", 3
         )));
 
-        for (int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= 6; i++) {
             loadBalancer.handleRequest("request " + i);
         }
     }
