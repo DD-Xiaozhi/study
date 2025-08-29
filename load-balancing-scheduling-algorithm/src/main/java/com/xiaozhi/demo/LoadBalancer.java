@@ -20,4 +20,5 @@ public class LoadBalancer {
         System.out.println("服务器 [ %s ] 处理请求, traceId: %s"
                 .formatted(distributionStrategy.getServerIp(), traceId));
     }
+
 }

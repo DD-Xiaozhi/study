@@ -1,9 +1,8 @@
 package com.xiaozhi.demo;
 
-import com.xiaozhi.demo.strategy.RoundRobinWeightDistributionStrategy;
+import com.xiaozhi.demo.strategy.MinActivityDistributionStrategy;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author DD
@@ -26,11 +25,13 @@ public class Starter {
 //                "44.22.11.11:8882", 2,
 //                "44.22.11.11:8883", 3
 //        )));
-        loadBalancer.setDistributionStrategy(new RoundRobinWeightDistributionStrategy(Map.of(
-                "44.22.11.11:8881", 1,
-                "44.22.11.11:8882", 2,
-                "44.22.11.11:8883", 3
-        )));
+//        loadBalancer.setDistributionStrategy(new RoundRobinWeightDistributionStrategy(Map.of(
+//                "44.22.11.11:8881", 1,
+//                "44.22.11.11:8882", 2,
+//                "44.22.11.11:8883", 3
+//        )));
+
+        loadBalancer.setDistributionStrategy(new MinActivityDistributionStrategy(server));
 
         for (int i = 1; i <= 6; i++) {
             loadBalancer.handleRequest("request " + i);
