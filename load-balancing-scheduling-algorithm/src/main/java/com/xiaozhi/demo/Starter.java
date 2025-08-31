@@ -1,6 +1,6 @@
 package com.xiaozhi.demo;
 
-import com.xiaozhi.demo.strategy.MinActivityDistributionStrategy;
+import com.xiaozhi.demo.strategy.ConsistencyHashDistributionStrategy;
 
 import java.util.List;
 
@@ -31,10 +31,13 @@ public class Starter {
 //                "44.22.11.11:8883", 3
 //        )));
 
-        loadBalancer.setDistributionStrategy(new MinActivityDistributionStrategy(server));
+        // loadBalancer.setDistributionStrategy(new MinActivityDistributionStrategy(server));
+
+        loadBalancer.setDistributionStrategy(new ConsistencyHashDistributionStrategy(server));
 
         for (int i = 1; i <= 6; i++) {
-            loadBalancer.handleRequest("request " + i);
+            // loadBalancer.handleRequest("request " + i, null);
+            loadBalancer.handleRequest("request " + i, "44.31.2.13:888" + i);
         }
     }
 }

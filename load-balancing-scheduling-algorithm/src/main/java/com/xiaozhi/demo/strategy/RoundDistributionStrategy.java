@@ -22,7 +22,7 @@ public class RoundDistributionStrategy implements DistributionStrategy {
     private List<String> serverList;
 
     @Override
-    public String getServerIp() {
+    public String getServerIp(String ip) {
         return serverList.get(roundCount++ % serverList.size());
     }
 }

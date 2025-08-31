@@ -27,7 +27,7 @@ public class MinActivityDistributionStrategy implements DistributionStrategy {
     }
 
     @Override
-    public String getServerIp() {
+    public String getServerIp(String ip) {
         String minActivityServerIp = serverActivityMap.entrySet().stream()
                 .min(Map.Entry.comparingByValue())
                 .get().getKey();

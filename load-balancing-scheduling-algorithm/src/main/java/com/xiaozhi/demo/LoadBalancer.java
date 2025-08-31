@@ -16,9 +16,9 @@ public class LoadBalancer {
      */
     private DistributionStrategy distributionStrategy;
 
-    public void handleRequest(String traceId) {
+    public void handleRequest(String traceId, String ip) {
         System.out.println("服务器 [ %s ] 处理请求, traceId: %s"
-                .formatted(distributionStrategy.getServerIp(), traceId));
+                .formatted(distributionStrategy.getServerIp(ip), traceId));
     }
 
 }

@@ -19,7 +19,7 @@ public class RandomDistributionStrategy implements DistributionStrategy {
     private List<String> serverList;
 
     @Override
-    public String getServerIp() {
+    public String getServerIp(String ip) {
         return serverList.get(random.nextInt(0, serverList.size() - 1));
     }
 }

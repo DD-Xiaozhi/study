@@ -38,7 +38,7 @@ public class RoundRobinWeightDistributionStrategy implements DistributionStrateg
     }
 
     @Override
-    public String getServerIp() {
+    public String getServerIp(String ip) {
         Set<Map.Entry<String, Integer>> entrySet = currentServerWeightMap.entrySet();
 
         // 获取当前权重最大服务器

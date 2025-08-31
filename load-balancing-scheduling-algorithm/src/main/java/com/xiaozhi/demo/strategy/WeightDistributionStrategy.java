@@ -23,7 +23,7 @@ public class WeightDistributionStrategy implements DistributionStrategy {
     }
 
     @Override
-    public String getServerIp() {
+    public String getServerIp(String ip) {
         // 获取随机索引
         int index = random.nextInt(totalWeight);
 
