@@ -1,6 +1,6 @@
 package com.xiaozhi.demo;
 
-import com.xiaozhi.demo.strategy.ConsistencyHashDistributionStrategy;
+import com.xiaozhi.demo.strategy.OptimalResponseAlgorithmDispatchStrategy;
 
 import java.util.List;
 
@@ -33,7 +33,9 @@ public class Starter {
 
         // loadBalancer.setDistributionStrategy(new MinActivityDistributionStrategy(server));
 
-        loadBalancer.setDistributionStrategy(new ConsistencyHashDistributionStrategy(server));
+        // loadBalancer.setDistributionStrategy(new ConsistencyHashDistributionStrategy(server));
+
+        loadBalancer.setDistributionStrategy(new OptimalResponseAlgorithmDispatchStrategy(server));
 
         for (int i = 1; i <= 6; i++) {
             // loadBalancer.handleRequest("request " + i, null);
